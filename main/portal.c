@@ -142,7 +142,6 @@ static bool portal_post_terms(void)
         .method = HTTP_METHOD_POST,
         .cert_pem = portal_ca_certs,
         .timeout_ms = 15000,
-        .keep_alive = false,
     };
 
     esp_http_client_handle_t client = esp_http_client_init(&config);
