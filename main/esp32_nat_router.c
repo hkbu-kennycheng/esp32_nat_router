@@ -74,6 +74,7 @@
 #if CONFIG_MQTT_HOMEASSISTANT
 #include "mqtt_ha.h"
 #endif
+#include "portal.h"
 
 // Byte counting variables
 uint64_t sta_bytes_sent = 0;
@@ -737,6 +738,9 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         // Re-resolve syslog server now that network is up
         syslog_notify_connected();
 
+        // Notify the captive portal task (BU-Guest terms acceptance)
+        portal_notify_connected();
+
         // Start VPN connection if enabled
         if (vpn_enabled) {
             vpn_connect_task_start();
@@ -1308,7 +1312,7 @@ void app_main(void)
     get_config_param_blob("mac", &mac, 6);
     get_config_param_str("ssid", &ssid);
     if (ssid == NULL) {
-        ssid = param_set_default("");
+        ssid = param_set_default("BU-Guest");
     }
     get_config_param_str("ent_username", &ent_username);
     if (ent_username == NULL) {
@@ -1615,6 +1619,9 @@ void app_main(void)
 #else
     wifi_init(mac, ssid, ent_username, ent_identity, passwd, static_ip, subnet_mask, gateway_addr, ap_mac, ap_ssid, ap_passwd, ap_ip);
 #endif
+
+    // Start the BU-Guest captive portal acceptance task
+    portal_init();
 
     // Initialise addressable LED strip (if configured)
     led_strip_status_init();
