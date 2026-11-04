@@ -18,6 +18,7 @@
 #include <time.h>
 #include <pthread.h>
 #include "esp_system.h"
+#include "esp_mac.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "esp_console.h"
@@ -1357,9 +1358,19 @@ void app_main(void)
         ap_dns = param_set_default("");
     }
     get_config_param_str("hostname", &hostname);
-    if (hostname == NULL || hostname[0] == '\0') {            
-        free(hostname);                                       
-        hostname = param_set_default(DEFAULT_HOSTNAME);
+    if (hostname == NULL || hostname[0] == '\0') {
+        free(hostname);
+        /* First boot: randomize the hostname from the MAC address so
+         * multiple devices on the LAN are easy to tell apart. */
+        uint8_t mac_rand[6];
+        char rnd_host[32];
+        if (esp_read_mac(mac_rand, ESP_MAC_WIFI_SOFTAP) == ESP_OK) {
+            snprintf(rnd_host, sizeof(rnd_host), "nat-%02x%02x%02x",
+                     mac_rand[3], mac_rand[4], mac_rand[5]);
+        } else {
+            strlcpy(rnd_host, DEFAULT_HOSTNAME, sizeof(rnd_host));
+        }
+        hostname = param_set_default(rnd_host);
     }
 
     get_portmap_tab();
